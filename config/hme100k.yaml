@@ -16,7 +16,13 @@ trainer:
   max_epochs: 120
   deterministic: true
   check_val_every_n_epoch: 2
-  # resume_from_checkpoint: 
+  # resume_from_checkpoint:
+
+wandb:
+  name: "..."
+  project: "ical-origin"
+  log_model: "all"
+
 model:
   d_model: 256
   # encoder

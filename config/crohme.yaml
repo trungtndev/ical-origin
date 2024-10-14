@@ -16,6 +16,12 @@ trainer:
   check_val_every_n_epoch: 2
   max_epochs: 250
   deterministic: true
+
+wandb:
+  name: "..."
+  project: "ical-origin"
+  log_model: "all"
+
 model:
   d_model: 256
   # encoder
@@ -42,7 +48,7 @@ model:
   dynamic_weight: true
 data:
   folder: data/crohme
-  test_folder: 2014
+  test_folder: "2014"
   max_size: 320000
   scale_to_limit: true
   train_batch_size: 8

@@ -1,5 +1,8 @@
-einops==0.3.0
+einops
 editdistance==0.5.3
+sconf
+timm
+wandb==0.18.0
 # for pytorch-lightning CLI
 jsonargparse[signatures]==3.17.0
 # dev-dependency
