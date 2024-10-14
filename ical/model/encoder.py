@@ -85,6 +85,8 @@ class _Bottleneck(nn.Module):
         self.conv2 = nn.Conv2d(
             interChannels, growth_rate, kernel_size=3, padding=1, bias=False
         )
+        self.cbam = CBAM(channels=growth_rate, reduction_rate=16, kernel_size=7)
+
         self.use_dropout = use_dropout
         self.dropout = nn.Dropout(p=0.2)
 
@@ -93,6 +95,7 @@ class _Bottleneck(nn.Module):
         if self.use_dropout:
             out = self.dropout(out)
         out = F.relu(self.bn2(self.conv2(out)), inplace=True)
+        out = self.cbam(out)
         if self.use_dropout:
             out = self.dropout(out)
         out = torch.cat((x, out), 1)
