@@ -151,6 +151,16 @@ class LitICAL(pl.LightningModule):
             sync_dist=True,
         )
 
+        loss = exp_loss + implicit_loss + fusion_loss
+        self.log(
+            "val_loss",
+            loss,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=False,
+            sync_dist=True,
+        )
+
         hyps = self.approximate_joint_search(batch.imgs, batch.mask)
 
         self.exprate_recorder([h.seq for h in hyps], batch.indices)
