@@ -20,13 +20,15 @@ def main(
     ckp_path = os.path.join(ckp_folder, fnames[0])
     print(f"Test with fname: {fnames[0]}")
 
-    trainer = Trainer(logger=False, gpus=1)
+    trainer = Trainer(logger=False, gpus=0)
 
     dm = HMEDatamodule(
         folder=folder,
         test_folder=test_year,
         max_size=max_size,
         scale_to_limit=scale_to_limit,
+        eval_batch_size=2,
+        num_workers=2,
     )
 
     model = LitICAL.load_from_checkpoint(ckp_path)

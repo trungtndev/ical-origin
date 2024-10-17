@@ -39,9 +39,9 @@ class CROHMEVocab:
 
 vocab = CROHMEVocab()
 
-if __name__ == '__main__':
-    vocab.init('./data/hme100k/dictionary.txt')
-    print(len(vocab))
-    print(vocab.word2idx['<space>'])
-    print(vocab.word2idx['{'], vocab.word2idx['}'],
-          vocab.word2idx['^'], vocab.word2idx['_'])
+# if __name__ == '__main__':
+#     vocab.init('./data/hme100k/dictionary.txt')
+#     print(len(vocab))
+#     print(vocab.word2idx['<space>'])
+#     print(vocab.word2idx['{'], vocab.word2idx['}'],
+#           vocab.word2idx['^'], vocab.word2idx['_'])
