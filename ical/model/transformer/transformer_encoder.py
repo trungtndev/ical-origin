@@ -32,12 +32,9 @@ class TransformerEncoder(nn.Module):
     def forward(
         self,
         tgt: Tensor,
-        memory: Tensor,
         height: int,
         tgt_mask: Optional[Tensor] = None,
-        memory_mask: Optional[Tensor] = None,
         tgt_key_padding_mask: Optional[Tensor] = None,
-        memory_key_padding_mask: Optional[Tensor] = None,
     ) -> Tensor:
         output = tgt
 
