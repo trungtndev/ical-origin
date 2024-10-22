@@ -174,6 +174,7 @@ class Decoder(DecodeModel):
             memory_key_padding_mask=src_mask,
         )
         imp_out = self.SCCM(tgt=out,
+                            h=h,
                             tgt_mask=tgt_mask,
                             tgt_key_padding_mask=tgt_pad_mask)
 
