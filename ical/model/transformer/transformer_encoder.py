@@ -45,15 +45,12 @@ class TransformerEncoder(nn.Module):
         for i, mod in enumerate(self.layers):
             output, attn = mod(
                 output,
-                memory,
                 arm,
                 tgt_mask=tgt_mask,
-                memory_mask=memory_mask,
                 tgt_key_padding_mask=tgt_key_padding_mask,
-                memory_key_padding_mask=memory_key_padding_mask,
             )
             if i != len(self.layers) - 1 and self.arm is not None:
-                arm = partial(self.arm, attn, memory_key_padding_mask, height)
+                arm = partial(self.arm, attn, tgt_key_padding_mask, height)
 
         if self.norm is not None:
             output = self.norm(output)
@@ -91,22 +88,16 @@ class TransformerEncoderLayer(nn.Module):
     def forward(
         self,
         tgt: Tensor,
-        memory: Tensor,
         arm: Optional[AttentionRefinementModule],
         tgt_mask: Optional[Tensor] = None,
-        memory_mask: Optional[Tensor] = None,
         tgt_key_padding_mask: Optional[Tensor] = None,
-        memory_key_padding_mask: Optional[Tensor] = None,
     ) -> Tensor:
         r"""Pass the inputs (and mask) through the decoder layer.
 
         Args:
             tgt: the sequence to the decoder layer (required).
-            memory: the sequence from the last layer of the encoder (required).
             tgt_mask: the mask for the tgt sequence (optional).
-            memory_mask: the mask for the memory sequence (optional).
             tgt_key_padding_mask: the mask for the tgt keys per batch (optional).
-            memory_key_padding_mask: the mask for the memory keys per batch (optional).
 
         Shape:
             see the docs in Transformer class.

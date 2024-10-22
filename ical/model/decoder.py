@@ -151,6 +151,7 @@ class Decoder(DecodeModel):
         FloatTensor
             [b, l, vocab_size]
         """
+        print(src.shape, src_mask.shape, tgt.shape)
         _, l = tgt.size()
         tgt_mask = self._build_attention_mask(l)
         tgt_pad_mask = tgt == vocab.PAD_IDX
