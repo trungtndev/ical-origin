@@ -12,6 +12,13 @@ from ical.model.transformer.transformer_decoder import (
     TransformerDecoder,
     TransformerDecoderLayer,
 )
+
+from ical.model.transformer.transformer_encoder import (
+    TransformerEncoder,
+    TransformerEncoderLayer,
+)
+
+
 from ical.utils.generation_utils import DecodeModel
 
 
@@ -40,6 +47,30 @@ def _build_transformer_decoder(
     decoder = TransformerDecoder(decoder_layer, num_decoder_layers, arm)
     return decoder
 
+def _build_transformer_encoder(
+    d_model: int,
+    nhead: int,
+    num_decoder_layers: int,
+    dim_feedforward: int,
+    dropout: float,
+    dc: int,
+    cross_coverage: bool,
+    self_coverage: bool,
+) -> nn.TransformerDecoder:
+    decoder_layer = TransformerEncoderLayer(
+        d_model=d_model,
+        nhead=nhead,
+        dim_feedforward=dim_feedforward,
+        dropout=dropout,
+    )
+    if cross_coverage or self_coverage:
+        arm = AttentionRefinementModule(
+            nhead, dc, cross_coverage, self_coverage)
+    else:
+        arm = None
+
+    encoder = TransformerEncoder(decoder_layer, num_decoder_layers, arm)
+    return encoder
 
 class Decoder(DecodeModel):
     def __init__(
@@ -74,7 +105,17 @@ class Decoder(DecodeModel):
             cross_coverage=cross_coverage,
             self_coverage=self_coverage,
         )
-        self.SCCM = SCCM(d_model)
+        self.SCCM = _build_transformer_encoder(
+            d_model=d_model,
+            nhead=nhead,
+            num_decoder_layers=num_decoder_layers,
+            dim_feedforward=dim_feedforward,
+            dropout=dropout,
+            dc=dc,
+            cross_coverage=cross_coverage,
+            self_coverage=self_coverage,
+        )
+
         self.fusion = FusionModule(d_model)
         self.exp_proj = nn.Linear(d_model, vocab_size)
         self.imp_proj = nn.Sequential(
@@ -131,9 +172,14 @@ class Decoder(DecodeModel):
             tgt_key_padding_mask=tgt_pad_mask,
             memory_key_padding_mask=src_mask,
         )
+        imp_out = self.SCCM(tgt=out,
+                            tgt_mask=tgt_mask,
+                            tgt_key_padding_mask=tgt_pad_mask)
 
         exp_out = rearrange(out, "l b d -> b l d")
-        imp_out = self.SCCM(exp_out, tgt_mask, tgt_pad_mask)
+        imp_out = rearrange(imp_out, "l b d -> b l d")
+
+        # imp_out = self.SCCM(exp_out, tgt_mask, tgt_pad_mask)
 
         fusion_out = self.fusion(exp_out, imp_out)
         exp_out = self.exp_proj(exp_out)
