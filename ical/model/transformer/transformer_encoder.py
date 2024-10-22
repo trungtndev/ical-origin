@@ -60,18 +60,13 @@ class TransformerEncoderLayer(nn.Module):
         super(TransformerEncoderLayer, self).__init__()
         self.self_attn = MultiheadAttention(
             d_model, nhead, dropout=dropout)
-        # self.multihead_attn = MultiheadAttention(
-        #     d_model, nhead, dropout=dropout)
-        # Implementation of Feedforward model
         self.linear1 = nn.Linear(d_model, dim_feedforward)
         self.dropout = nn.Dropout(dropout)
         self.linear2 = nn.Linear(dim_feedforward, d_model)
 
-        # self.norm1 = nn.LayerNorm(d_model)
         self.norm2 = nn.LayerNorm(d_model)
         self.norm3 = nn.LayerNorm(d_model)
 
-        # self.dropout1 = nn.Dropout(dropout)
         self.dropout2 = nn.Dropout(dropout)
         self.dropout3 = nn.Dropout(dropout)
 
@@ -100,7 +95,12 @@ class TransformerEncoderLayer(nn.Module):
             see the docs in Transformer class.
         """
         tgt2, attn = self.self_attn(
-            tgt, tgt, tgt, arm=arm, attn_mask=tgt_mask, key_padding_mask=tgt_key_padding_mask
+            tgt,
+            tgt,
+            tgt,
+            arm=arm,
+            attn_mask=tgt_mask,
+            key_padding_mask=tgt_key_padding_mask
         )
         # tgt = tgt + self.dropout1(tgt2)
         # tgt = self.norm1(tgt)

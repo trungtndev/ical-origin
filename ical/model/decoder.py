@@ -180,8 +180,6 @@ class Decoder(DecodeModel):
         exp_out = rearrange(out, "l b d -> b l d")
         imp_out = rearrange(imp_out, "l b d -> b l d")
 
-        # imp_out = self.SCCM(exp_out, tgt_mask, tgt_pad_mask)
-
         fusion_out = self.fusion(exp_out, imp_out)
         exp_out = self.exp_proj(exp_out)
         imp_out = self.imp_proj(imp_out)
