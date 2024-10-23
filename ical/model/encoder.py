@@ -10,6 +10,7 @@ from torch import FloatTensor, LongTensor
 
 from .pos_enc import ImgPosEnc
 
+
 class ChannelAttention(nn.Module):
     def __init__(self, channels, reduction_rate=16):
         super(ChannelAttention, self).__init__()
@@ -28,7 +29,7 @@ class ChannelAttention(nn.Module):
         )
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, x):
+    def forward(self, x, mask=None):
         # perform squeeze with independent Pooling
         avg_feat = self.squeeze[0](x)
         max_feat = self.squeeze[1](x)
@@ -38,6 +39,7 @@ class ChannelAttention(nn.Module):
         # attention
         attention = self.sigmoid(avg_out + max_out)
         return attention * x
+
 
 class SpatialAttention(nn.Module):
     def __init__(self, kernel_size=7):
@@ -50,9 +52,9 @@ class SpatialAttention(nn.Module):
         )
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, x):
+    def forward(self, x, mask=None):
         # mean on spatial dim
-        avg_feat    = torch.mean(x, dim=1, keepdim=True)
+        avg_feat = torch.mean(x, dim=1, keepdim=True)
         # max on spatial dim
         max_feat, _ = torch.max(x, dim=1, keepdim=True)
         feat = torch.cat([avg_feat, max_feat], dim=1)
@@ -60,18 +62,20 @@ class SpatialAttention(nn.Module):
         attention = self.sigmoid(out_feat)
         return attention * x
 
+
 class CBAM(pl.LightningModule):
     def __init__(self, channels, reduction_rate=16, kernel_size=7):
         super(CBAM, self).__init__()
         self.channel_attention = ChannelAttention(channels,
-                                                      reduction_rate)
+                                                  reduction_rate)
         self.spatial_attention = SpatialAttention(kernel_size)
 
-    def forward(self, x):
-        out = self.channel_attention(x)
-        out = self.spatial_attention(out)
+    def forward(self, x, mask=None):
+        out = self.channel_attention(x, mask=mask)
+        out = self.spatial_attention(out, mask=mask)
 
         return out
+
 
 # DenseNet-B
 class _Bottleneck(nn.Module):
@@ -85,7 +89,6 @@ class _Bottleneck(nn.Module):
         self.conv2 = nn.Conv2d(
             interChannels, growth_rate, kernel_size=3, padding=1, bias=False
         )
-        self.cbam = CBAM(channels=growth_rate, reduction_rate=16, kernel_size=7)
 
         self.use_dropout = use_dropout
         self.dropout = nn.Dropout(p=0.2)
@@ -95,7 +98,6 @@ class _Bottleneck(nn.Module):
         if self.use_dropout:
             out = self.dropout(out)
         out = F.relu(self.bn2(self.conv2(out)), inplace=True)
-        out = self.cbam(out)
         if self.use_dropout:
             out = self.dropout(out)
         out = torch.cat((x, out), 1)
@@ -110,13 +112,11 @@ class _SingleLayer(nn.Module):
         self.conv1 = nn.Conv2d(
             n_channels, growth_rate, kernel_size=3, padding=1, bias=False
         )
-        self.cbam = CBAM(channels=growth_rate, reduction_rate=16, kernel_size=7)
         self.use_dropout = use_dropout
         self.dropout = nn.Dropout(p=0.2)
 
     def forward(self, x):
         out = self.conv1(F.relu(x, inplace=True))
-        out = self.cbam(out)
         if self.use_dropout:
             out = self.dropout(out)
         out = torch.cat((x, out), 1)
@@ -143,12 +143,12 @@ class _Transition(nn.Module):
 
 class DenseNet(nn.Module):
     def __init__(
-        self,
-        growth_rate: int,
-        num_layers: int,
-        reduction: float = 0.5,
-        bottleneck: bool = True,
-        use_dropout: bool = True,
+            self,
+            growth_rate: int,
+            num_layers: int,
+            reduction: float = 0.5,
+            bottleneck: bool = True,
+            use_dropout: bool = True,
     ):
         super(DenseNet, self).__init__()
         n_dense_blocks = num_layers
@@ -162,6 +162,7 @@ class DenseNet(nn.Module):
         )
         n_channels += n_dense_blocks * growth_rate
         n_out_channels = int(math.floor(n_channels * reduction))
+        self.cbam1 = CBAM(channels=n_channels, reduction_rate=6, kernel_size=7)
         self.trans1 = _Transition(n_channels, n_out_channels, use_dropout)
 
         n_channels = n_out_channels
@@ -170,12 +171,14 @@ class DenseNet(nn.Module):
         )
         n_channels += n_dense_blocks * growth_rate
         n_out_channels = int(math.floor(n_channels * reduction))
+        self.cbam2 = CBAM(channels=n_channels, reduction_rate=6, kernel_size=7)
         self.trans2 = _Transition(n_channels, n_out_channels, use_dropout)
 
         n_channels = n_out_channels
         self.dense3 = self._make_dense(
             n_channels, growth_rate, n_dense_blocks, bottleneck, use_dropout
         )
+        self.cbam3 = CBAM(channels=n_channels + n_dense_blocks * growth_rate, reduction_rate=6, kernel_size=3)
 
         self.out_channels = n_channels + n_dense_blocks * growth_rate
         self.post_norm = nn.BatchNorm2d(self.out_channels)
@@ -201,12 +204,15 @@ class DenseNet(nn.Module):
         out = F.max_pool2d(out, 2, ceil_mode=True)
         out_mask = out_mask[:, 0::2, 0::2]
         out = self.dense1(out)
+        out = self.cbam1(out)
         out = self.trans1(out)
         out_mask = out_mask[:, 0::2, 0::2]
         out = self.dense2(out)
+        out = self.cbam2(out)
         out = self.trans2(out)
         out_mask = out_mask[:, 0::2, 0::2]
         out = self.dense3(out)
+        out = self.cbam3(out)
         out = self.post_norm(out)
         return out, out_mask
 
@@ -225,7 +231,7 @@ class Encoder(pl.LightningModule):
         self.norm = nn.LayerNorm(d_model)
 
     def forward(
-        self, img: FloatTensor, img_mask: LongTensor
+            self, img: FloatTensor, img_mask: LongTensor
     ) -> Tuple[FloatTensor, LongTensor]:
         """encode image to feature
 
