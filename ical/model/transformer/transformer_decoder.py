@@ -69,8 +69,9 @@ class TransformerDecoderLayer(nn.Module):
             d_model, nhead, dropout=dropout)
         # Implementation of Feedforward model
         self.linear1 = nn.Linear(d_model, dim_feedforward)
+        self.linear2 = nn.Linear(d_model, dim_feedforward)
         self.dropout = nn.Dropout(dropout)
-        self.linear2 = nn.Linear(dim_feedforward, d_model)
+        self.linear3 = nn.Linear(dim_feedforward, d_model)
 
         self.norm1 = nn.LayerNorm(d_model)
         self.norm2 = nn.LayerNorm(d_model)
@@ -80,7 +81,7 @@ class TransformerDecoderLayer(nn.Module):
         self.dropout2 = nn.Dropout(dropout)
         self.dropout3 = nn.Dropout(dropout)
 
-        self.activation = F.relu
+        self.activation = F.silu
 
     def __setstate__(self, state):
         if "activation" not in state:
@@ -125,7 +126,9 @@ class TransformerDecoderLayer(nn.Module):
         )
         tgt = tgt + self.dropout2(tgt2)
         tgt = self.norm2(tgt)
-        tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt))))
+
+        tgt2 = self.linear3(self.dropout(self.activation(self.linear1(tgt)) * self.linear2(tgt)))
+
         tgt = tgt + self.dropout3(tgt2)
         tgt = self.norm3(tgt)
         return tgt, attn
