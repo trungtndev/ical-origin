@@ -16,11 +16,11 @@ def _get_clones(module, N):
 
 class TransformerEncoder(nn.Module):
     def __init__(
-        self,
-        decoder_layer,
-        num_layers: int,
-        arm: Optional[AttentionRefinementModule],
-        norm=None,
+            self,
+            decoder_layer,
+            num_layers: int,
+            arm: Optional[AttentionRefinementModule],
+            norm=None,
     ):
         super(TransformerEncoder, self).__init__()
         self.layers = _get_clones(decoder_layer, num_layers)
@@ -30,10 +30,12 @@ class TransformerEncoder(nn.Module):
         self.arm = arm
 
     def forward(
-        self,
-        tgt: Tensor,
-        tgt_mask: Optional[Tensor] = None,
-        tgt_key_padding_mask: Optional[Tensor] = None,
+            self,
+            tgt: Tensor,
+            height: int,
+
+            tgt_mask: Optional[Tensor] = None,
+            tgt_key_padding_mask: Optional[Tensor] = None,
     ) -> Tensor:
         output = tgt
 
@@ -46,7 +48,7 @@ class TransformerEncoder(nn.Module):
                 tgt_key_padding_mask=tgt_key_padding_mask,
             )
             if i != len(self.layers) - 1 and self.arm is not None:
-                arm = partial(self.arm, attn, tgt_key_padding_mask)
+                arm = partial(self.arm, attn, tgt_key_padding_mask, height)
 
         if self.norm is not None:
             output = self.norm(output)
@@ -77,11 +79,11 @@ class TransformerEncoderLayer(nn.Module):
         super(TransformerEncoderLayer, self).__setstate__(state)
 
     def forward(
-        self,
-        tgt: Tensor,
-        arm: Optional[AttentionRefinementModule],
-        tgt_mask: Optional[Tensor] = None,
-        tgt_key_padding_mask: Optional[Tensor] = None,
+            self,
+            tgt: Tensor,
+            arm: Optional[AttentionRefinementModule],
+            tgt_mask: Optional[Tensor] = None,
+            tgt_key_padding_mask: Optional[Tensor] = None,
     ) -> Tensor:
         r"""Pass the inputs (and mask) through the decoder layer.
 
