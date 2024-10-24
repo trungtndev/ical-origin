@@ -16,11 +16,11 @@ def _get_clones(module, N):
 
 class TransformerDecoder(nn.Module):
     def __init__(
-        self,
-        decoder_layer,
-        num_layers: int,
-        arm: Optional[AttentionRefinementModule],
-        norm=None,
+            self,
+            decoder_layer,
+            num_layers: int,
+            arm: Optional[AttentionRefinementModule],
+            norm=None,
     ):
         super(TransformerDecoder, self).__init__()
         self.layers = _get_clones(decoder_layer, num_layers)
@@ -30,14 +30,14 @@ class TransformerDecoder(nn.Module):
         self.arm = arm
 
     def forward(
-        self,
-        tgt: Tensor,
-        memory: Tensor,
-        height: int,
-        tgt_mask: Optional[Tensor] = None,
-        memory_mask: Optional[Tensor] = None,
-        tgt_key_padding_mask: Optional[Tensor] = None,
-        memory_key_padding_mask: Optional[Tensor] = None,
+            self,
+            tgt: Tensor,
+            memory: Tensor,
+            height: int,
+            tgt_mask: Optional[Tensor] = None,
+            memory_mask: Optional[Tensor] = None,
+            tgt_key_padding_mask: Optional[Tensor] = None,
+            memory_key_padding_mask: Optional[Tensor] = None,
     ) -> Tensor:
         output = tgt
 
@@ -69,8 +69,9 @@ class TransformerDecoderLayer(nn.Module):
             d_model, nhead, dropout=dropout)
         # Implementation of Feedforward model
         self.linear1 = nn.Linear(d_model, dim_feedforward)
+        self.linear2 = nn.Linear(d_model, dim_feedforward)
         self.dropout = nn.Dropout(dropout)
-        self.linear2 = nn.Linear(dim_feedforward, d_model)
+        self.linear3 = nn.Linear(dim_feedforward, d_model)
 
         self.norm1 = nn.LayerNorm(d_model)
         self.norm2 = nn.LayerNorm(d_model)
@@ -80,7 +81,7 @@ class TransformerDecoderLayer(nn.Module):
         self.dropout2 = nn.Dropout(dropout)
         self.dropout3 = nn.Dropout(dropout)
 
-        self.activation = F.relu
+        self.activation = nn.SiLU()
 
     def __setstate__(self, state):
         if "activation" not in state:
@@ -88,14 +89,14 @@ class TransformerDecoderLayer(nn.Module):
         super(TransformerDecoderLayer, self).__setstate__(state)
 
     def forward(
-        self,
-        tgt: Tensor,
-        memory: Tensor,
-        arm: Optional[AttentionRefinementModule],
-        tgt_mask: Optional[Tensor] = None,
-        memory_mask: Optional[Tensor] = None,
-        tgt_key_padding_mask: Optional[Tensor] = None,
-        memory_key_padding_mask: Optional[Tensor] = None,
+            self,
+            tgt: Tensor,
+            memory: Tensor,
+            arm: Optional[AttentionRefinementModule],
+            tgt_mask: Optional[Tensor] = None,
+            memory_mask: Optional[Tensor] = None,
+            tgt_key_padding_mask: Optional[Tensor] = None,
+            memory_key_padding_mask: Optional[Tensor] = None,
     ) -> Tensor:
         r"""Pass the inputs (and mask) through the decoder layer.
 
@@ -129,7 +130,7 @@ class TransformerDecoderLayer(nn.Module):
         )
         tgt = tgt + self.dropout2(tgt2)
         tgt = self.norm2(tgt)
-        tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt))))
+        tgt2 = self.linear3(self.dropout(self.activation(self.linear1(tgt)) * self.linear2(tgt)))
         tgt = tgt + self.dropout3(tgt2)
         tgt = self.norm3(tgt)
         return tgt, attn
