@@ -32,7 +32,6 @@ class TransformerEncoder(nn.Module):
     def forward(
         self,
         tgt: Tensor,
-        height: int,
         tgt_mask: Optional[Tensor] = None,
         tgt_key_padding_mask: Optional[Tensor] = None,
     ) -> Tensor:
@@ -47,7 +46,7 @@ class TransformerEncoder(nn.Module):
                 tgt_key_padding_mask=tgt_key_padding_mask,
             )
             if i != len(self.layers) - 1 and self.arm is not None:
-                arm = partial(self.arm, attn, tgt_key_padding_mask, height)
+                arm = partial(self.arm, attn, tgt_key_padding_mask)
 
         if self.norm is not None:
             output = self.norm(output)

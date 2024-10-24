@@ -8,6 +8,8 @@ from torch import FloatTensor, LongTensor
 from ical.datamodule import vocab
 from ical.model.pos_enc import WordPosEnc
 from ical.model.transformer.arm import AttentionRefinementModule
+from ical.model.transformer.arm_self_attn import AttentionRefinementModuleEncoder
+
 from ical.model.transformer.transformer_decoder import (
     TransformerDecoder,
     TransformerDecoderLayer,
@@ -64,7 +66,7 @@ def _build_transformer_encoder(
         dropout=dropout,
     )
     if cross_coverage or self_coverage:
-        arm = AttentionRefinementModule(
+        arm = AttentionRefinementModuleEncoder(
             nhead, dc, cross_coverage, self_coverage)
     else:
         arm = None
@@ -173,7 +175,6 @@ class Decoder(DecodeModel):
             memory_key_padding_mask=src_mask,
         )
         imp_out = self.SCCM(tgt=out,
-                            height=1,
                             tgt_mask=tgt_mask,
                             tgt_key_padding_mask=tgt_pad_mask)
 
@@ -193,41 +194,6 @@ class Decoder(DecodeModel):
         assert len(src) == 1 and len(src_mask) == 1
         exp_out, imp_out, fusion_out = self(src[0], src_mask[0], input_ids)
         return fusion_out
-
-class SCCM(nn.Module):
-    def __init__(self, d_model):
-        super().__init__()
-        self.te = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(
-                d_model, nhead=8, dim_feedforward=1024, dropout=0.3,
-            ),
-            num_layers=1,
-        )
-
-    def forward(self, out: FloatTensor, tgt_mask: LongTensor, src_key_padding_mask: LongTensor):
-        """generate implicit logits
-
-        Parameters
-        ----------
-        out : FloatTensor
-            [b, l, d]
-        tgt_mask: LongTensor
-            [b, l]
-        src_key_padding_mask: LongTensor
-            [b, l, d]
-        Returns
-        -------
-        FloatTensor
-            [b, l, d]
-        """
-        out = rearrange(out, "b t d -> t b d")
-        out = self.te(
-            src=out, mask=tgt_mask, src_key_padding_mask=src_key_padding_mask
-        )
-        out = rearrange(out, "t b d -> b t d")
-
-        return out
-
 
 class FusionModule(nn.Module):
     def __init__(self,  d_model: int,):
