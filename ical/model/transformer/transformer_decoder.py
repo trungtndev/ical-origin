@@ -81,7 +81,7 @@ class TransformerDecoderLayer(nn.Module):
         self.dropout2 = nn.Dropout(dropout)
         self.dropout3 = nn.Dropout(dropout)
 
-        self.activation = F.silu
+        self.activation = nn.SiLU()
 
     def __setstate__(self, state):
         if "activation" not in state:
