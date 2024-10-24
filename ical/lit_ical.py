@@ -258,35 +258,3 @@ class LitICAL(pl.LightningModule):
         _, max_indices = torch.max(imp_out_hat, dim=2)
         max_indices = max_indices[:4, :].tolist()
         return max_indices
-
-from dataclasses import dataclass
-@dataclass
-class Batch:
-    img_bases: List[str]  # [b,]
-    imgs: FloatTensor  # [b, 1, H, W]
-    mask: LongTensor  # [b, H, W]
-    indices: List[List[int]]  # [b, l]
-
-    def __len__(self) -> int:
-        return len(self.img_bases)
-
-    def to(self, device) -> "Batch":
-        return Batch(
-            img_bases=self.img_bases,
-            imgs=self.imgs.to(device),
-            mask=self.mask.to(device),
-            indices=self.indices,
-        )
-if __name__ == "__main__":
-    model = LitICAL(256, 32, 3, 8, 4,
-                    1024, 0.1, 4,
-                    True, True,
-                    4, 20, 0.6, True, 1.0,
-                    1e-4, 5)
-
-    img = torch.randn(2, 1, 224, 224)
-    img_mask = torch.ones((2, 224, 224), dtype=torch.long)
-    tgt = torch.randint(0, 100, (4, 20))
-    datamodel = HMEDatamodule("data/crohme", num_workers=1)
-
-    model.training_step(Batch("a", img, img_mask, tgt), None)
