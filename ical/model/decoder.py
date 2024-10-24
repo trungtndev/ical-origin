@@ -8,6 +8,7 @@ from torch import FloatTensor, LongTensor
 from ical.datamodule import vocab
 from ical.model.pos_enc import WordPosEnc
 from ical.model.transformer.arm import AttentionRefinementModule
+from ical.model.transformer.arm_self_attn import AttentionRefinementModule1D
 
 from ical.model.transformer.transformer_decoder import (
     TransformerDecoder,
@@ -65,7 +66,7 @@ def _build_transformer_encoder(
         dropout=dropout,
     )
     if cross_coverage or self_coverage:
-        arm = AttentionRefinementModule(
+        arm = AttentionRefinementModule1D(
             nhead, dc, cross_coverage, self_coverage)
     else:
         arm = None

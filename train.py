@@ -46,15 +46,15 @@ def train(config: Config):
         scale_aug=config.data.scale_aug,
     )
 
-    logger = Logger(name=config.wandb.name,
-                    project=config.wandb.project,
-                    log_model=config.wandb.log_model,
-                    config=dict(config),
-                    )
-    logger.watch(model_module,
-                 log="all",
-                 log_freq=100
-                 )
+    # logger = Logger(name=config.wandb.name,
+    #                 project=config.wandb.project,
+    #                 log_model=config.wandb.log_model,
+    #                 config=dict(config),
+    #                 )
+    # logger.watch(model_module,
+    #              log="all",
+    #              log_freq=100
+    #              )
     lr_callback = pl.callbacks.LearningRateMonitor(
         logging_interval=config.trainer.callbacks[0].init_args.logging_interval)
 
@@ -81,7 +81,7 @@ def train(config: Config):
         check_val_every_n_epoch=config.trainer.check_val_every_n_epoch,
 
         plugins=DDPPlugin(find_unused_parameters=False),
-        logger=logger,
+        # logger=logger,
         callbacks=[lr_callback, checkpoint_callback, lasted_checkpoint_callback],
     )
 
