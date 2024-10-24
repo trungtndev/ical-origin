@@ -51,7 +51,7 @@ class AttentionRefinementModule1D(nn.Module):
         else:
             in_chs = nhead
 
-        self.conv = nn.Conv2d(in_chs, dc, kernel_size=(1,5), padding=2)
+        self.conv = nn.Conv2d(in_chs, dc, kernel_size=(1,5), padding=(0, 2))
         self.act = nn.ReLU(inplace=True)
 
         self.proj = nn.Conv2d(dc, nhead, kernel_size=1, bias=False)
