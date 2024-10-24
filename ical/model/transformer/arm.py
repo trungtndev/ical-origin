@@ -58,7 +58,7 @@ class AttentionRefinementModule(nn.Module):
         self.post_norm = MaskBatchNorm2d(nhead)
 
     def forward(
-        self, prev_attn: Tensor, key_padding_mask: Tensor, h: int, curr_attn: Tensor
+            self, prev_attn: Tensor, key_padding_mask: Tensor, h: int, curr_attn: Tensor
     ) -> Tensor:
         """
         Parameters
@@ -101,6 +101,7 @@ class AttentionRefinementModule(nn.Module):
         cov = rearrange(cov, "(b t) n h w -> (b n) t (h w)", t=t)
         return cov
 
+
 class AttentionRefinementModule1D(nn.Module):
     def __init__(self, nhead: int, dc: int, cross_coverage: bool, self_coverage: bool):
         super().__init__()
@@ -114,14 +115,14 @@ class AttentionRefinementModule1D(nn.Module):
         else:
             in_chs = nhead
 
-        self.conv = nn.Conv2d(in_chs, dc, kernel_size=(1,5), padding=(0, 2))
+        self.conv = nn.Conv2d(in_chs, dc, kernel_size=(1, 5), padding=(0, 2))
         self.act = nn.ReLU(inplace=True)
 
         self.proj = nn.Conv2d(dc, nhead, kernel_size=1, bias=False)
         self.post_norm = MaskBatchNorm2d(nhead)
 
     def forward(
-        self, prev_attn: Tensor, key_padding_mask: Tensor, h: int, curr_attn: Tensor
+            self, prev_attn: Tensor, key_padding_mask: Tensor, h: int, curr_attn: Tensor
     ) -> Tensor:
         """
         Parameters
