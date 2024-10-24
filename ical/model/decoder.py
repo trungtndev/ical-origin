@@ -7,8 +7,7 @@ from torch import FloatTensor, LongTensor
 
 from ical.datamodule import vocab
 from ical.model.pos_enc import WordPosEnc
-from ical.model.transformer.arm import AttentionRefinementModule
-from ical.model.transformer.arm_self_attn import AttentionRefinementModule1D
+from ical.model.transformer.arm import AttentionRefinementModule, AttentionRefinementModule1D
 
 from ical.model.transformer.transformer_decoder import (
     TransformerDecoder,

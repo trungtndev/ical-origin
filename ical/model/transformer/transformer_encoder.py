@@ -103,16 +103,6 @@ class TransformerEncoderLayer(nn.Module):
             attn_mask=tgt_mask,
             key_padding_mask=tgt_key_padding_mask
         )
-        # tgt = tgt + self.dropout1(tgt2)
-        # tgt = self.norm1(tgt)
-        # tgt2, attn = self.multihead_attn(
-        #     tgt,
-        #     memory,
-        #     memory,
-        #     arm=arm,
-        #     attn_mask=memory_mask,
-        #     key_padding_mask=memory_key_padding_mask,
-        # )
         tgt = tgt + self.dropout2(tgt2)
         tgt = self.norm2(tgt)
         tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt))))
