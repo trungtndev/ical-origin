@@ -109,7 +109,7 @@ class Decoder(DecodeModel):
         self.SCCM = _build_transformer_encoder(
             d_model=d_model,
             nhead=nhead,
-            num_decoder_layers=num_decoder_layers,
+            num_decoder_layers=2,
             dim_feedforward=dim_feedforward,
             dropout=dropout,
             dc=dc,
