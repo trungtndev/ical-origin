@@ -149,8 +149,10 @@ def to_tgt_output(
     if is_implicit:
         filtered_tokens = []
         for token in tokens:
-            mask = (token != vocab.word2idx['{']) & (token != vocab.word2idx['}']) & (
-                token != vocab.word2idx['^']) & (token != vocab.word2idx['_'])
+            mask = ((token != vocab.word2idx['{']) &
+                    (token != vocab.word2idx['}']) &
+                    (token != vocab.word2idx['^']) &
+                    (token != vocab.word2idx['_']))
             token[mask] = 3
             filtered_tokens.append(token)
         tokens = filtered_tokens
