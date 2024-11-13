@@ -10,6 +10,8 @@ from pytorch_lightning.loggers import WandbLogger as Logger
 
 
 def train(config: Config):
+    pl.seed_everything(config.seed_everything, workers=True)
+
     model_module = LitICAL(
         d_model=config.model.d_model,
         # encoder
