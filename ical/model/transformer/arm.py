@@ -48,11 +48,12 @@ class AttentionRefinementModule(nn.Module):
 
         if cross_coverage and self_coverage:
             in_chs = 2 * nhead
+            dc = 2 * dc
         else:
             in_chs = nhead
 
         self.conv = nn.Conv2d(in_chs, dc, kernel_size=5, padding=2)
-        self.act = nn.ReLU(inplace=True)
+        self.act = nn.GELU()
 
         self.proj = nn.Conv2d(dc, nhead, kernel_size=1, bias=False)
         self.post_norm = MaskBatchNorm2d(nhead)
@@ -86,9 +87,20 @@ class AttentionRefinementModule(nn.Module):
         if self.self_coverage:
             attns.append(curr_attn)
         attns = torch.cat(attns, dim=1)
-
         attns = attns.cumsum(dim=2) - attns
+
+        # ========================
+        # add normalization by log
+        attns = torch.log(2 + attns)
+        # pay attention to the low value
+        attns = torch.log(1 + 1 / (attns + 10e-6))
+        # ========================
+
         attns = rearrange(attns, "b n t (h w) -> (b t) n h w", h=h)
+
+        # ==========
+        attns = attns.masked_fill(mask, 0.0)
+        # ==========
 
         cov = self.conv(attns)
         cov = self.act(cov)
