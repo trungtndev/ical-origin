@@ -98,9 +98,6 @@ class AttentionRefinementModule(nn.Module):
 
         attns = rearrange(attns, "b n t (h w) -> (b t) n h w", h=h)
 
-        # ==========
-        # attns = attns.masked_fill(mask, 0.0)
-        # ==========
 
         cov = self.conv(attns)
         cov = self.act(cov)
