@@ -108,4 +108,4 @@ class AttentionRefinementModule(nn.Module):
         cov = self.post_norm(cov, mask)
 
         cov = rearrange(cov, "(b t) n h w -> (b n) t (h w)", t=t)
-        return -1 * cov
+        return cov
